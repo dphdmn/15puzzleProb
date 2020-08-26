@@ -4,6 +4,15 @@
 * {
   box-sizing: border-box;
 }
+#chartdiv2 {
+  width: 70%;
+  max-height: 500px;
+  height: 500px;
+  background:#444;
+  
+    margin-left: auto;
+  margin-right: auto;
+}
 #chartdiv {
   width: 70%;
   max-height: 500px;
