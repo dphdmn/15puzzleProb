@@ -16,7 +16,7 @@ let minV=0;
 let lastf1 = 0;
 let lastf2 = 80;
 let graphtype=1;
-
+let drawScnd=true;
   $( function() {
     $("#slider-range").slider(
       {
@@ -26,18 +26,26 @@ let graphtype=1;
       values: [ 0, maxV],
       slide: function( event, ui ) {
         $("#amount").val("Moves "+ ui.values[0] + " - " + ui.values[1]);
+        drawn=false;
+        drawScnd=false;
         doOnChange(ui.values[0],ui.values[1]);
+        
       },
       change: function(event,ui){
         $("#amount").val("Moves "+ ui.values[0] + " - " + ui.values[1]);
+         drawn=false;
+        drawScnd=true;
       doOnChange(ui.values[0],ui.values[1]);
+       
       }            
     }
     ).slider().slider("pips", {
         rest: "label",
     })
     setVal();
+    drawn=false;
     doOnChange(minV,maxV);
+    
   } );
 
 function getAm(num){
@@ -72,12 +80,16 @@ function bl(s){
 }
 let nscr=100;
 let ac=2;
+let rp=100;
+drawn=false;
 function doOnChange(f1,f2){
-  makeGraph(f1,f2);
+  if (!drawn){
+    makeGraph(f1,f2);
+  }
   lastf1=f1;
   lastf2=f2;
   out="";
-  let rp = getRangeP(f1,f2);
+  rp = getRangeP(f1,f2);
   out+="<p>The probability of " + bl(pzlName) + " puzzle being optimally solved in ";
   if (f1 != f2){
   out+="range from " + bl(f1) + " to "+ bl(f2) + " moves is ";
@@ -141,14 +153,17 @@ $('input[type=radio][name=g]').change(function(){
   if (this.value=='1'){
     graphtype=1;
     chartdiv.style="";
+    chartdiv2.style="";
   }
   if (this.value=='2'){
     graphtype=2;
     chartdiv.style="";
+    chartdiv2.style="";
   }
   if (this.value=='3'){
     graphtype=3;
     chartdiv.style="display:none";
+    chartdiv2.style="display:none";
   }
   makeGraph(lastf1,lastf2);
 });
@@ -177,6 +192,7 @@ $('input[type=radio][name=pzl]').change(function() {
   
     maxV = numTable.length-1
     setVal();
+  drawn=false;
     doOnChange(minV,maxV);
   
     $("#slider-range").slider('option', {max: maxV});
@@ -189,7 +205,7 @@ $('input[type=radio][name=pzl]').change(function() {
 });
 
 function makeGraph(f1, f2){
-  if (graphtype != 3){
+  if (graphtype != 3){//console.log(rp);
       let maximumv=0;
       let val=0;
       data.length=0;
@@ -215,22 +231,37 @@ function makeGraph(f1, f2){
           data.push({ moves: i, amount: val});
       }
       }
-      chart.data = data;
-    chart.numberFormatter=new am4core.NumberFormatter();
-    //console.log(maximumv);
-    if (maximumv < 1){
+      
+      g1.chart.data = data;
+      g1.changeFormat(maximumv);
+      chartdiv2.style="display:none";//&& (1-Math.pow((1 - rp/100),1000))*100>1
+      if (drawScnd ){
+        let rpp=rp/100;
 
-      chart.numberFormatter.numberFormat = '#.######e';
-
-    }else{
-      chart.numberFormatter.numberFormat = '#.######'
-    }
-
-    categoryAxis.numberFormatter = new am4core.NumberFormatter();
-    categoryAxis.numberFormatter.numberFormat="#.#";
+        let norp=1-rpp;
+        let pSc = rp; 
+        let data2 = [];
+      let next=1;
+        data2.length=0;
+        let lastProc=0;
+        for (let i = 1; pSc < 99; i++){
+          pSc = (1-next*norp)*100;
+          if(pSc>lastProc+1){
+            data2.push({moves:i,amount:pSc});
+            lastProc=pSc;
+          }
+          next = (1-(pSc/100)); 
+          if (i>=100000){
+            break;
+          }
+        }
+        g2.chart.data = data2;
+        if (data2.length>0){
+          chartdiv2.style="";
+        }
+      }
+    drawScnd=true;
+    drawn=true;
   }
 }
 
-function setup(){
-  makeGraph(minV,maxV);
-}
